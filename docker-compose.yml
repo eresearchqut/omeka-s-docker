@@ -1,0 +1,24 @@
+version: '3.9'
+
+services:
+  db:
+    platform: linux/x86_64
+    image: mysql:5.7
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: omeka
+      MYSQL_DATABASE: omeka
+      MYSQL_USER: omeka
+      MYSQL_PASSWORD: omeka
+
+  omeka-s:
+    depends_on:
+      - db
+    build: ./
+    image: eresearchqut/omeka-s
+    ports:
+      - "80:80"
+    volumes:
+      - ./modules/:/var/www/html/modules/
+      - ./themes/custom/:/var/www/html/themes/custom/
+    restart: always
