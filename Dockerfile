@@ -1,4 +1,4 @@
-FROM php:apache
+FROM php:8.2-apache
 
 # Omeka-S web publishing platform for digital heritage collections (https://omeka.org/s/)
 MAINTAINER QUT eResearch <eresearch@qut.edu.au>
@@ -33,6 +33,7 @@ RUN curl -J -L -s -k \
 &&  mv /var/www/omeka-s /var/www/html \
 &&  chown -R www-data:www-data /var/www/html
 
+COPY ./php.ini "$PHP_INI_DIR/php.ini"
 COPY ./database.ini /var/www/html/config/database.ini
 COPY ./imagemagick-policy.xml /etc/ImageMagick/policy.xml
 COPY ./.htaccess /var/www/html/.htaccess

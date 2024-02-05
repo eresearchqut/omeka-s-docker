@@ -1,6 +1,22 @@
 version: '3.9'
 
 services:
+
+#  mediagoblin:
+#    image: jparyani/mediagoblin
+#    ports:
+#      - 6543:6543
+#    volumes:
+#      - ./data/mediagoblin:/var/lib/mediagoblin
+#
+#
+#  tube:
+#    image: prologic/tube
+#    ports:
+#      - 8000:8000
+#    volumes:
+#      - ./data/tube:/data
+
   db:
     platform: linux/x86_64
     image: mysql:5.7
@@ -10,10 +26,15 @@ services:
       MYSQL_DATABASE: omeka
       MYSQL_USER: omeka
       MYSQL_PASSWORD: omeka
+    healthcheck:
+      test: [ "CMD", "mysqladmin" ,"ping", "-h", "localhost" ]
+      timeout: 20s
+      retries: 10
 
   omeka-s:
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     build: ./
     image: eresearchqut/omeka-s
     ports:
@@ -22,3 +43,36 @@ services:
       - ./modules/:/var/www/html/modules/
       - ./themes/custom/:/var/www/html/themes/custom/
     restart: always
+
+  cache:
+    image: redis:6
+
+  directus:
+    image: directus/directus:10.8.3
+    ports:
+      - 8055:8055
+    volumes:
+      - ./uploads:/directus/uploads
+      # If you want to load extensions from the host
+      # - ./extensions:/directus/extensions
+    depends_on:
+      db:
+        condition: service_healthy
+      cache:
+        condition: service_started
+      omeka-s:
+        condition: service_started
+    environment:
+      KEY: '255d861b-5ea1-5996-9aa3-922530ec40b1'
+      SECRET: '6116487b-cda1-52c2-b5b5-c8022c45e263'
+      DB_CLIENT: 'mysql'
+      DB_HOST: 'db'
+      DB_PORT: '3306'
+      DB_DATABASE: 'omeka'
+      DB_USER: 'omeka'
+      DB_PASSWORD: 'omeka'
+      CACHE_ENABLED: 'true'
+      CACHE_STORE: 'redis'
+      REDIS: 'redis://cache:6379'
+      ADMIN_EMAIL: 'admin@example.com'
+      ADMIN_PASSWORD: 'd1r3ctu5'
